@@ -10,7 +10,7 @@ class TreatmentsController extends Controller
 {
     public function index()
     {
-        return response()->json(TreatmentResource::collection(Treatment::all()));
+        return TreatmentResource::collection(Treatment::all());
     }
 
     public function store(Request $request)
@@ -32,14 +32,14 @@ class TreatmentsController extends Controller
 
     public function show(Treatment $treatment)
     {
-        return response()->json(new TreatmentResource($treatment));
+        return new TreatmentResource($treatment);
     }
 
     public function update(Request $request, Treatment $treatment)
     {
         $treatment->update($request->all());
 
-        return response()->json(new TreatmentResource($treatment));
+        return new TreatmentResource($treatment);
     }
 
     public function destroy(Treatment $treatment)

@@ -1,7 +1,7 @@
 <?php
 
 test('the application returns a successful response', function () {
-    $response = $this->get(route('customers.index'));
+    $response = $this->getJson('/api/customers');
 
-    $response->assertViewIs('customers.index');
+    $response->assertStatus(200);
 });

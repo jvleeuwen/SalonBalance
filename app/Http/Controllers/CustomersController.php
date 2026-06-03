@@ -11,26 +11,26 @@ class CustomersController extends Controller
 {
     public function index()
     {
-        return response()->json(CustomerResource::collection(Customer::all()));
+        return CustomerResource::collection(Customer::all());
     }
 
     public function store(StoreCustomerRequest $request)
     {
         $customer = Customer::create($request->validated());
 
-        return response()->json(new CustomerResource($customer), 201);
+        return (new CustomerResource($customer))->response()->setStatusCode(201);
     }
 
     public function show(Customer $customer)
     {
-        return response()->json(new CustomerResource($customer));
+        return new CustomerResource($customer);
     }
 
     public function update(UpdateCustomerRequest $request, Customer $customer)
     {
         $customer->update($request->validated());
 
-        return response()->json(new CustomerResource($customer));
+        return new CustomerResource($customer);
     }
 
     public function destroy(Customer $customer)
