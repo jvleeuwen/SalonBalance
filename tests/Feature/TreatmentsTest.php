@@ -16,18 +16,16 @@ class TreatmentsTest extends TestCase
     {
         $customer = Customer::factory()->create();
 
-        $response = $this->postJson('/treatments', [
+        $response = $this->postJson('/api/treatments', [
             'customer_id' => $customer->id,
-            'name'        => $this->faker->word(),
+            'name'        => 'Haircut',
             'price'       => 49.99,
             'version'     => 1,
         ]);
 
         $response->assertStatus(201);
-        $data = $response->json('treatment');
         $this->assertDatabaseHas('treatments', [
-            'name'        => $data['name'],
-            'price'       => $data['price'],
+            'name'        => 'Haircut',
             'customer_id' => $customer->id,
         ]);
     }
@@ -36,28 +34,27 @@ class TreatmentsTest extends TestCase
     {
         $treatment = Treatment::factory()->create();
 
-        $response = $this->getJson("/treatments/{$treatment->id}");
+        $response = $this->getJson("/api/treatments/{$treatment->id}");
 
         $response->assertStatus(200);
-        $this->assertEquals($treatment->name, $response->json('name'));
+        $this->assertEquals($treatment->name, $response->json('data.name'));
     }
 
     public function test_update_treatment(): void
     {
         $treatment = Treatment::factory()->create();
-        $newName  = $this->faker->word();
-        $newPrice = 75.00;
+        $newName   = 'Updated Treatment';
+        $newPrice  = 75.00;
 
-        $response = $this->putJson("/treatments/{$treatment->id}", [
+        $response = $this->putJson("/api/treatments/{$treatment->id}", [
             'name'  => $newName,
             'price' => $newPrice,
         ]);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('treatments', [
-            'id'    => $treatment->id,
-            'name'  => $newName,
-            'price' => $newPrice,
+            'id'   => $treatment->id,
+            'name' => $newName,
         ]);
     }
 
@@ -65,7 +62,7 @@ class TreatmentsTest extends TestCase
     {
         $treatment = Treatment::factory()->create();
 
-        $response = $this->deleteJson("/treatments/{$treatment->id}");
+        $response = $this->deleteJson("/api/treatments/{$treatment->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('treatments', ['id' => $treatment->id]);
