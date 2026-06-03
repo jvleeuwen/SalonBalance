@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Treatment;
-use App\Models\Customer; // Add this line
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
@@ -18,7 +17,6 @@ class TreatmentsTest extends TestCase
             'name' => $this->faker->word,
             'price' => rand(10, 100),
             'version' => rand(1, 5),
-            'customer_id' => Customer::factory(),
         ]);
 
         $response->assertStatus(201);
@@ -27,7 +25,6 @@ class TreatmentsTest extends TestCase
             'name' => $treatment['name'],
             'price' => $treatment['price'],
             'version' => $treatment['version'],
-            'customer_id' => $treatment['customer_id'],
         ]);
     }
 
@@ -51,7 +48,6 @@ class TreatmentsTest extends TestCase
             'name' => $newName,
             'price' => $newPrice,
             'version' => $newVersion,
-            'customer_id' => $treatment->customer_id,
         ]);
 
         $response->assertStatus(201);
@@ -61,7 +57,6 @@ class TreatmentsTest extends TestCase
             'name' => $updatedTreatment['name'],
             'price' => $updatedTreatment['price'],
             'version' => $updatedTreatment['version'],
-            'customer_id' => $updatedTreatment['customer_id'],
         ]);
     }
 

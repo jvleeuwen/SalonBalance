@@ -1,58 +1,137 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SalonBalance
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> Salon management web application for tracking customers and treatments.  
+> Built with Laravel 13, PHP 8.3, and Pest for testing.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Customer management** — create, view, edit and delete customer records (name, phone, address)
+- **Treatment management** — log treatments per customer with name, price and version tracking
+- **Full CRUD** — blade-based UI for all resources
+- **Validated forms** — server-side validation on all inputs
+- **Tested** — Pest feature tests for customers and treatments
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Tech Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Layer | Technology |
+|-------|-----------|
+| Framework | Laravel 13 |
+| Language | PHP 8.3 |
+| Frontend | Blade + Vite |
+| Database | SQLite (local) |
+| Testing | Pest 4 |
+| Code style | Laravel Pint |
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Requirements
 
-## Agentic Development
+- PHP 8.3+
+- Composer
+- Node.js 18+
+- npm
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+---
+
+## Installation
 
 ```bash
-composer require laravel/boost --dev
+# Clone the repository
+git clone https://github.com/your-username/SalonBalance.git
+cd SalonBalance
 
-php artisan boost:install
+# Install PHP dependencies
+composer install
+
+# Install Node dependencies
+npm install
+
+# Copy environment file and generate app key
+cp .env.example .env
+php artisan key:generate
+
+# Create the SQLite database and run migrations
+touch database/database.sqlite
+php artisan migrate
+
+# Build frontend assets
+npm run build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## Development
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Start all services in one command:
 
-## Code of Conduct
+```bash
+composer dev
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+This starts:
+- Laravel dev server (`php artisan serve`)
+- Queue worker
+- Log watcher (Pail)
+- Vite HMR (`npm run dev`)
 
-## Security Vulnerabilities
+Or start individually:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan serve    # http://localhost:8000
+npm run dev          # Vite HMR
+```
+
+---
+
+## Running Tests
+
+```bash
+composer test
+# or
+php artisan test
+# or
+./vendor/bin/pest
+```
+
+Tests cover:
+- `CustomersTest` — index, create, store, show, edit, update, destroy
+- `TreatmentsTest` — index, create, store, show, edit, update, destroy
+
+---
+
+## Project Structure
+
+```
+app/
+├── Http/
+│   └── Controllers/
+│       ├── CustomersController.php   # Full resource CRUD
+│       └── TreatmentsController.php  # Full resource CRUD
+├── Models/
+│   ├── Customer.php                  # name, telephone_number, street_address
+│   └── Treatment.php                 # name, price, version, customer_id
+resources/
+└── views/
+    ├── customers/                    # index, show, create, edit
+    └── treatments/                   # index, show, create, edit
+routes/
+└── web.php                           # /customers (resource), /treatments
+tests/
+└── Feature/
+    ├── CustomersTest.php
+    └── TreatmentsTest.php
+```
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Copyright (C) 2026 JvLeeuwen Development. All rights reserved.
+
+This project is licensed under the [GNU Affero General Public License v3.0](LICENSE).  
+You may view and fork this code, but commercial use requires a separate commercial license.  
+Contact **JvLeeuwen Development** for commercial licensing inquiries.

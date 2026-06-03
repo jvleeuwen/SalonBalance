@@ -3,26 +3,28 @@
 namespace Database\Factories;
 
 use App\Models\Treatment;
-use App\Models\Customer; // Add this line
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Treatment>
- */
 class TreatmentFactory extends Factory
 {
     /**
+     * The name of the factory's corresponding model.
+     *
+     * @var string
+     */
+    protected $model = Treatment::class;
+
+    /**
      * Define the model's default state.
      *
-     * @return array<string, mixed>
+     * @return array
      */
-    public function definition(): array
+    public function definition()
     {
         return [
             'name' => $this->faker->word,
             'price' => rand(10, 100),
             'version' => rand(1, 5),
-            'customer_id' => Customer::factory(),
         ];
     }
 }
