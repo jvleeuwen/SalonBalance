@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Customer;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class CustomerFactory extends Factory
 {
@@ -22,9 +23,9 @@ class CustomerFactory extends Factory
     public function definition()
     {
         return [
-            'name' => $this->faker->name,
-            'telephone_number' => $this->faker->e164PhoneNumber,
-            'street_address' => $this->faker->address,
+            'name'             => fake()->name(),
+            'telephone_number' => fake()->phoneNumber(),
+            'street_address'   => fake()->address(),
         ];
     }
 }

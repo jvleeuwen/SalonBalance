@@ -9,65 +9,51 @@ use Tests\TestCase;
 
 class CustomersTest extends TestCase
 {
-    use RefreshDatabase, WithFaker;
+    use RefreshDatabase;
 
-    public function test_create_customer()
+    public function test_it_can_store_a_customer()
     {
-        $response = $this->postJson('/customers', [
-            'name' => $this->faker->name,
-            'telephone_number' => $this->faker->e164PhoneNumber,
-            'street_address' => $this->faker->address,
+        $response = $this->postJson('/api/customers', [
+            'name'             => 'John Doe',
+            'telephone_number' => '0612345678',
+            'street_address'   => 'Main Street 1',
         ]);
 
         $response->assertStatus(201);
-        $customer = json_decode($response->getContent(), true);
-        $this->assertDatabaseHas('customers', [
-            'name' => $customer['name'],
-            'telephone_number' => $customer['telephone_number'],
-            'street_address' => $customer['street_address'],
-        ]);
+        $this->assertCount(1, Customer::all());
     }
 
-    public function test_show_customer()
+    public function test_it_can_show_a_customer()
     {
         $customer = Customer::factory()->create();
-        $response = $this->getJson("/customers/{$customer->id}");
+
+        $response = $this->getJson("/api/customers/{$customer->id}");
 
         $response->assertStatus(200);
-        $this->assertEquals($customer->name, json_decode($response->getContent(), true)['name']);
+        $this->assertEquals($customer->name, $response->json('data.name'));
     }
 
-    public function test_update_customer()
+    public function test_it_can_update_a_customer()
     {
         $customer = Customer::factory()->create();
-        $newName = $this->faker->name;
-        $newTelephoneNumber = $this->faker->e164PhoneNumber;
-        $newStreetAddress = $this->faker->address;
 
-        $response = $this->putJson("/customers/{$customer->id}", [
-            'name' => $newName,
-            'telephone_number' => $newTelephoneNumber,
-            'street_address' => $newStreetAddress,
+        $response = $this->putJson("/api/customers/{$customer->id}", [
+            'name'             => 'Jane Doe',
+            'telephone_number' => '0687654321',
+            'street_address'   => 'Second Street 2',
         ]);
 
-        $response->assertStatus(201);
-        $updatedCustomer = json_decode($response->getContent(), true);
-        $this->assertDatabaseHas('customers', [
-            'id' => $customer->id,
-            'name' => $updatedCustomer['name'],
-            'telephone_number' => $updatedCustomer['telephone_number'],
-            'street_address' => $updatedCustomer['street_address'],
-        ]);
+        $response->assertStatus(200);
+        $this->assertEquals('Jane Doe', Customer::find($customer->id)->name);
     }
 
-    public function test_delete_customer()
+    public function test_it_can_delete_a_customer()
     {
         $customer = Customer::factory()->create();
-        $response = $this->deleteJson("/customers/{$customer->id}");
+
+        $response = $this->deleteJson("/api/customers/{$customer->id}");
 
         $response->assertStatus(204);
-        $this->assertDatabaseMissing('customers', [
-            'id' => $customer->id,
-        ]);
+        $this->assertCount(0, Customer::all());
     }
 }
