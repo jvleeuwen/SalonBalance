@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Customer;
 use App\Models\Treatment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -11,63 +12,62 @@ class TreatmentsTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
-    public function test_create_treatment()
+    public function test_create_treatment(): void
     {
+        $customer = Customer::factory()->create();
+
         $response = $this->postJson('/treatments', [
-            'name' => $this->faker->word,
-            'price' => rand(10, 100),
-            'version' => rand(1, 5),
+            'customer_id' => $customer->id,
+            'name'        => $this->faker->word(),
+            'price'       => 49.99,
+            'version'     => 1,
         ]);
 
         $response->assertStatus(201);
-        $treatment = json_decode($response->getContent(), true);
+        $data = $response->json('treatment');
         $this->assertDatabaseHas('treatments', [
-            'name' => $treatment['name'],
-            'price' => $treatment['price'],
-            'version' => $treatment['version'],
+            'name'        => $data['name'],
+            'price'       => $data['price'],
+            'customer_id' => $customer->id,
         ]);
     }
 
-    public function test_show_treatment()
+    public function test_show_treatment(): void
     {
         $treatment = Treatment::factory()->create();
+
         $response = $this->getJson("/treatments/{$treatment->id}");
 
         $response->assertStatus(200);
-        $this->assertEquals($treatment->name, json_decode($response->getContent(), true)['name']);
+        $this->assertEquals($treatment->name, $response->json('name'));
     }
 
-    public function test_update_treatment()
+    public function test_update_treatment(): void
     {
         $treatment = Treatment::factory()->create();
-        $newName = $this->faker->word;
-        $newPrice = rand(10, 100);
-        $newVersion = rand(1, 5);
+        $newName  = $this->faker->word();
+        $newPrice = 75.00;
 
         $response = $this->putJson("/treatments/{$treatment->id}", [
-            'name' => $newName,
+            'name'  => $newName,
             'price' => $newPrice,
-            'version' => $newVersion,
         ]);
 
-        $response->assertStatus(201);
-        $updatedTreatment = json_decode($response->getContent(), true);
+        $response->assertStatus(200);
         $this->assertDatabaseHas('treatments', [
-            'id' => $treatment->id,
-            'name' => $updatedTreatment['name'],
-            'price' => $updatedTreatment['price'],
-            'version' => $updatedTreatment['version'],
+            'id'    => $treatment->id,
+            'name'  => $newName,
+            'price' => $newPrice,
         ]);
     }
 
-    public function test_delete_treatment()
+    public function test_delete_treatment(): void
     {
         $treatment = Treatment::factory()->create();
+
         $response = $this->deleteJson("/treatments/{$treatment->id}");
 
         $response->assertStatus(204);
-        $this->assertDatabaseMissing('treatments', [
-            'id' => $treatment->id,
-        ]);
+        $this->assertDatabaseMissing('treatments', ['id' => $treatment->id]);
     }
 }

@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Customer;
 
 class Treatment extends Model
 {
-    protected $fillable = ['name', 'price', 'version'];
+    use HasFactory;
+
+    protected $fillable = ['customer_id', 'name', 'price', 'version'];
 
     public function customer()
     {
