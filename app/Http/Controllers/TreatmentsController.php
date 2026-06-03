@@ -4,65 +4,86 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Treatment;
-use App\Models\Customer; // Add this import
+use App\Http\Resources\TreatmentResource;
 
 class TreatmentsController extends Controller
 {
-    public function index()
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(): \Illuminate\Http\JsonResponse
     {
         $treatments = Treatment::all();
-        return view('treatments.index', compact('treatments'));
+
+        return response()->json(TreatmentResource::collection($treatments));
     }
 
+    /**
+     * Show the form for creating a new resource.
+     */
     public function create()
     {
-        $customers = Customer::all();
-        return view('treatments.create', compact('customers'));
+        // Typically, this would render a view
     }
 
-    public function store(Request $request)
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request): \Illuminate\Http\JsonResponse
     {
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string',
             'price' => 'required|numeric',
-            'version' => 'required|string|max:255',
+            'version' => 'required|int',
             'customer_id' => 'required|exists:customers,id',
         ]);
 
-        Treatment::create($validatedData);
+        $treatment = Treatment::create($validatedData);
 
-        return redirect()->route('treatments.index')->with('success', 'Treatment created successfully.');
+        return response()->json([
+            'message' => 'Treatment created.',
+            'treatment' => $treatment,
+        ], 201);
     }
 
-    public function show(Treatment $treatment)
+    /**
+     * Display the specified resource.
+     */
+    public function show(Treatment $treatment): \Illuminate\Http\JsonResponse
     {
-        return view('treatments.show', compact('treatment'));
+        return response()->json(new TreatmentResource($treatment));
     }
 
+    /**
+     * Show the form for editing the specified resource.
+     */
     public function edit(Treatment $treatment)
     {
-        $customers = Customer::all();
-        return view('treatments.edit', compact('treatment', 'customers'));
+        // Typically, this would render a view
     }
 
-    public function update(Request $request, Treatment $treatment)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Treatment $treatment): \Illuminate\Http\JsonResponse
     {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric',
-            'version' => 'required|string|max:255',
-            'customer_id' => 'required|exists:customers,id',
-        ]);
+        $treatment->update($request->all());
 
-        $treatment->update($validatedData);
-
-        return redirect()->route('treatments.index')->with('success', 'Treatment updated successfully.');
+        return response()->json([
+            'message' => 'Treatment updated.',
+            'treatment' => $treatment,
+        ], 200);
     }
 
-    public function destroy(Treatment $treatment)
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Treatment $treatment): \Illuminate\Http\JsonResponse
     {
         $treatment->delete();
 
-        return redirect()->route('treatments.index')->with('success', 'Treatment deleted successfully.');
+        return response()->json([
+            'message' => 'Treatment deleted.',
+        ], 204);
     }
 }

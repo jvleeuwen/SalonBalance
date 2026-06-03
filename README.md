@@ -1,5 +1,14 @@
 # SalonBalance
 
+[![Tests](https://github.com/jvleeuwen/SalonBalance/actions/workflows/tests.yml/badge.svg)](https://github.com/jvleeuwen/SalonBalance/actions/workflows/tests.yml)
+[![Coverage](https://codecov.io/gh/jvleeuwen/SalonBalance/branch/main/graph/badge.svg)](https://codecov.io/gh/jvleeuwen/SalonBalance)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=jvleeuwen_SalonBalance&metric=alert_status)](https://sonarcloud.io/project/overview?id=jvleeuwen_SalonBalance)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=jvleeuwen_SalonBalance&metric=bugs)](https://sonarcloud.io/project/overview?id=jvleeuwen_SalonBalance)
+[![Security](https://sonarcloud.io/api/project_badges/measure?project=jvleeuwen_SalonBalance&metric=vulnerabilities)](https://sonarcloud.io/project/overview?id=jvleeuwen_SalonBalance)
+[![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?logo=php&logoColor=white)](https://php.net)
+[![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
+[![License](https://img.shields.io/badge/License-AGPL--3.0-blue)](LICENSE)
+
 > Salon management web application for tracking customers and treatments.  
 > Built with Laravel 13, PHP 8.3, and Pest for testing.
 
@@ -41,7 +50,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/SalonBalance.git
+git clone https://github.com/jvleeuwen/SalonBalance.git
 cd SalonBalance
 
 # Install PHP dependencies
@@ -92,8 +101,6 @@ npm run dev          # Vite HMR
 ```bash
 composer test
 # or
-php artisan test
-# or
 ./vendor/bin/pest
 ```
 
@@ -125,6 +132,17 @@ tests/
     ├── CustomersTest.php
     └── TreatmentsTest.php
 ```
+
+---
+
+## CI/CD
+
+| Service | Purpose |
+|---------|---------|
+| GitHub Actions | Runs Pest tests on every push and PR |
+| Codecov | Tracks test coverage over time |
+| SonarCloud | Static analysis — bugs, vulnerabilities, code smells |
+| Dependabot | Weekly dependency security updates (Composer, npm, Actions) |
 
 ---
 
