@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Treatment;
 
 class Customer extends Model
 {
+    use HasFactory;
+
     protected $fillable = ['name', 'telephone_number', 'street_address'];
 
     public function treatments()
