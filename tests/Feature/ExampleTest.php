@@ -1,7 +1,7 @@
 <?php
 
 test('the application returns a successful response', function () {
-    $response = $this->get('/');
+    $response = $this->get(route('customers.index'));
 
-    $response->assertStatus(200);
+    $response->assertViewIs('customers.index');
 });
