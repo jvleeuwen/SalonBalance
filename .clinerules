@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Global Cline Rules — All Projects
 
 These rules apply to every project regardless of technology stack or location.
@@ -140,3 +141,430 @@ Features to use:
 - List files created/modified after completion.
 - Explain failures with new approach.
 - No debug output in committed code.
+=======
+# Cline Rules — SalonBalance (Laravel 13, PHP 8.3)
+
+## RULE 0 — TASK ORCHESTRATION (Always Default)
+
+For any task touching more than 3 files, ALWAYS break into subtasks using new_task.
+
+### Standard SalonBalance Subtask Split
+When adding a new feature (e.g. Appointments, Invoices, Products):
+
+```
+new_task: "Create [Model] model with fillable, casts, relationships — read existing models first"
+new_task: "Create migration for [table] — check database/migrations/ first for duplicates"
+new_task: "Create [Model]Service with create/update/delete — read CustomerService for pattern"
+new_task: "Create Store[Model]Request and Update[Model]Request in app/Http/Requests/[Model]/"
+new_task: "Create [Model]Controller (thin, delegates to service) — read CustomersController for pattern"
+new_task: "Create [Model]Resource — read CustomerResource for pattern"
+new_task: "Add routes to routes/web.php — read existing routes first"
+new_task: "Write Pest feature tests in tests/Feature/[Model]/ — cover store, update, delete, validation"
+```
+
+### Rules for Each Subtask
+- Read only the files needed for that subtask (1-4 files max)
+- Use write_to_file for all files under 300 lines
+- Complete the file fully before finishing — no partial implementations
+- Do NOT run migrations, npm install, or composer install unless explicitly instructed
+- Do NOT modify files outside the subtask scope
+
+---
+
+## CRITICAL: File Existence — Check Before Creating
+
+**Before creating ANY file**, verify it does not already exist using the filesystem tools.
+If the file exists: READ it, understand it, then EDIT it — never overwrite or recreate it.
+
+Files that commonly already exist in this project:
+- `app/Models/Customer.php` ✅ exists
+- `app/Models/Treatment.php` ✅ exists
+- `app/Models/User.php` ✅ exists
+- `app/Http/Controllers/CustomersController.php` ✅ exists
+- `app/Http/Controllers/TreatmentsController.php` ✅ exists
+- `app/Http/Resources/CustomerResource.php` ✅ exists
+- `app/Providers/AppServiceProvider.php` ✅ exists
+- `routes/web.php` ✅ exists
+- `routes/console.php` ✅ exists
+
+---
+
+## FORBIDDEN Commands — Never Run These
+
+```
+laravel new          # NEVER — project already exists
+php artisan make:*   # NEVER without checking target file does not exist first
+composer create-project  # NEVER
+npm create           # NEVER
+```
+
+Before running `php artisan make:migration`, check `database/migrations/` for existing migrations on the same table. If a migration already handles that table, **edit the existing migration** (if not yet run) or **create a new additive migration** (e.g. `add_email_to_customers_table`).
+
+---
+
+## Project Structure — Always Follow This Layout
+
+```
+app/
+├── Actions/          # Single-purpose action classes (e.g. CreateCustomerAction)
+├── Data/             # DTOs — typed data transfer objects
+├── Enums/            # PHP 8.1+ backed enums
+├── Http/
+│   ├── Controllers/  # Thin controllers — delegate to Actions/Services
+│   ├── Requests/     # Form Requests for ALL validation — never validate in controllers
+│   └── Resources/    # API Resources for ALL responses — never return raw models
+├── Models/           # Eloquent models
+├── Policies/         # Authorization policies — one per model
+├── Providers/        # Service providers
+└── Services/         # Business logic and orchestration
+database/
+├── factories/        # Model factories
+├── migrations/       # One migration per schema change
+└── seeders/          # Database seeders
+routes/
+├── web.php           # Web routes
+└── api.php           # API routes (create if needed)
+tests/
+├── Feature/          # Pest feature tests
+└── Unit/             # Pest unit tests
+```
+
+---
+
+## Controllers — Enterprise Rules
+
+**Controllers must be thin.** No business logic inside controllers.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\Customer\StoreCustomerRequest;
+use App\Http\Requests\Customer\UpdateCustomerRequest;
+use App\Http\Resources\CustomerResource;
+use App\Models\Customer;
+use App\Services\CustomerService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\View\View;
+
+class CustomersController extends Controller
+{
+    public function __construct(
+        private readonly CustomerService $customerService,
+    ) {}
+
+    public function index(): View|AnonymousResourceCollection
+    {
+        $customers = Customer::query()->with('treatments')->paginate(25);
+
+        return view('customers.index', compact('customers'));
+    }
+
+    public function store(StoreCustomerRequest $request): RedirectResponse
+    {
+        $this->customerService->create($request->validated());
+
+        return redirect()->route('customers.index')->with('success', 'Customer created.');
+    }
+}
+```
+
+Rules:
+- Always use **model binding**: `Customer $customer` not `string $id`
+- Always use **Form Request** classes for validation — never `$request->validate()` directly in controller
+- Always declare **return types**
+- Always use `declare(strict_types=1)` at the top of every file
+- Inject services via constructor with `private readonly`
+- Use `compact()` or named array keys for view data
+
+---
+
+## Models — Enterprise Rules
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Customer extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'telephone_number',
+        'street_address',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+        ];
+    }
+
+    public function treatments(): HasMany
+    {
+        return $this->hasMany(Treatment::class);
+    }
+}
+```
+
+Rules:
+- Always use `HasFactory` trait
+- Always type-hint relationship return types (`HasMany`, `BelongsTo`, `BelongsToMany`, etc.)
+- Use `casts()` method (not `$casts` property) for PHP 8+ compatibility
+- Never use `::all()` — use `::query()->...` with pagination
+- Use Eloquent scopes for reusable query logic
+- Use `$fillable` (not `$guarded = []`)
+
+---
+
+## Form Requests — Required for All Validation
+
+Never put `$request->validate()` in a controller. Always create a Form Request.
+
+```
+app/Http/Requests/Customer/StoreCustomerRequest.php
+app/Http/Requests/Customer/UpdateCustomerRequest.php
+app/Http/Requests/Treatment/StoreTreatmentRequest.php
+```
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests\Customer;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreCustomerRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'name'             => ['required', 'string', 'max:255'],
+            'telephone_number' => ['required', 'string', 'max:50'],
+            'street_address'   => ['required', 'string', 'max:255'],
+        ];
+    }
+}
+```
+
+---
+
+## Services — Business Logic Layer
+
+Business logic belongs in `app/Services/`, never in controllers or models.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Models\Customer;
+use Illuminate\Support\Facades\DB;
+
+class CustomerService
+{
+    public function create(array $validated): Customer
+    {
+        return DB::transaction(static function () use ($validated): Customer {
+            return Customer::create($validated);
+        });
+    }
+
+    public function update(Customer $customer, array $validated): Customer
+    {
+        $customer->update($validated);
+
+        return $customer->fresh();
+    }
+
+    public function delete(Customer $customer): void
+    {
+        $customer->delete();
+    }
+}
+```
+
+---
+
+## API Resources — Required for All API Responses
+
+Never return a raw Model or Collection from an API route. Always use a Resource.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class CustomerResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id'               => $this->id,
+            'name'             => $this->name,
+            'telephone_number' => $this->telephone_number,
+            'street_address'   => $this->street_address,
+            'treatments'       => TreatmentResource::collection($this->whenLoaded('treatments')),
+            'created_at'       => $this->created_at->toISOString(),
+        ];
+    }
+}
+```
+
+---
+
+## Migrations — Strict Rules
+
+Before creating a migration:
+1. List all files in `database/migrations/`
+2. Check if any migration already creates or modifies the target table
+3. If a `create_X_table` migration exists: do NOT create another — edit it if not yet run, or write an additive `add_column_to_X_table` migration
+
+Migration naming:
+- Create: `create_customers_table`
+- Add column: `add_email_to_customers_table`
+- Rename: `rename_phone_to_telephone_in_customers_table`
+- Drop: `drop_legacy_orders_table`
+
+Never create duplicate `create_X_table` migrations. The database has these tables already:
+- `users`, `cache`, `jobs` (default Laravel)
+- `customers`
+- `treatments`
+
+---
+
+## PHP 8.3 Standards — Always Apply
+
+```php
+declare(strict_types=1);          // top of every file
+```
+
+Use:
+- **Typed properties**: `public string $name;`
+- **Return types**: always declared, use `void`, `never`, `mixed` where appropriate  
+- **Named arguments**: `Customer::create(name: $name)` for clarity
+- **Enums** for fixed sets of values (e.g. status fields): `app/Enums/`
+- **Readonly properties**: `public readonly string $name`
+- **Match expressions** over switch statements
+- **Nullsafe operator**: `$user?->profile?->avatar`
+- **First-class callable syntax**: `array_map($this->transform(...), $items)`
+
+Never use:
+- `array` type hints without generics in PHPDoc
+- Inline `if/else` for complex logic — extract to methods
+- Magic numbers — use named constants or enums
+- `var_dump`, `dd`, `die` in committed code
+
+---
+
+## Testing — Pest (Required)
+
+Every new feature or bug fix must have a Pest test.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use App\Models\Customer;
+
+it('creates a customer with valid data', function (): void {
+    $response = $this->post(route('customers.store'), [
+        'name'             => 'Jane Doe',
+        'telephone_number' => '0612345678',
+        'street_address'   => 'Main Street 1',
+    ]);
+
+    $response->assertRedirect(route('customers.index'));
+    $this->assertDatabaseHas('customers', ['name' => 'Jane Doe']);
+});
+
+it('fails validation when name is missing', function (): void {
+    $this->post(route('customers.store'), [])
+        ->assertSessionHasErrors(['name']);
+});
+```
+
+Test file location:
+- Feature tests: `tests/Feature/`
+- Unit tests: `tests/Unit/`
+- Organized by domain: `tests/Feature/Customers/`, `tests/Feature/Treatments/`
+
+Run tests with: `php artisan test` or `./vendor/bin/pest`
+
+---
+
+## Blade Templates — Conventions
+
+- Store in `resources/views/` organized by domain: `customers/`, `treatments/`
+- Use Tailwind CSS v4 (already installed via `@tailwindcss/vite`)
+- Use Blade components for reusable UI: `resources/views/components/`
+- Never put PHP business logic in Blade — only display logic
+- Always escape output: `{{ $var }}` not `{!! $var !!}` unless explicitly safe HTML
+
+---
+
+## Error Handling
+
+- Use Laravel's exception handler — never `try/catch` for control flow
+- For expected failures, use `abort(404)` or `throw new ModelNotFoundException()`
+- Log unexpected errors: `Log::error('message', ['context' => $data])`
+- Return consistent error responses from API endpoints using `response()->json(['message' => '...'], 422)`
+
+---
+
+## Security Rules
+
+- Never commit secrets — all credentials in `.env` only
+- Never expose internal IDs in URLs if sensitivity requires it — use UUIDs
+- Always authorize actions via Policies: `$this->authorize('update', $customer)`
+- Validate ALL user input via Form Requests
+- Use `$fillable` on every model — never `$guarded = []`
+- Rate limit sensitive routes
+
+---
+
+## What This Project Is
+
+**SalonBalance** — A salon management application.
+
+Existing domain:
+- `Customer` — has name, telephone_number, street_address
+- `Treatment` — belongs to Customer, has name, price, version
+
+Stack:
+- Laravel 13 / PHP 8.3
+- MySQL (`SalonBalance` database)
+- Tailwind CSS v4
+- Vite 8
+- Pest 4 for testing
+- `laravel/pail` for log tailing
+>>>>>>> main
