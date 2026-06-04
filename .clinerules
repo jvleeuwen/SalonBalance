@@ -7,200 +7,136 @@ Optimized for local AI model (qwen2.5-coder:14b) on RTX 3500 Ada.
 
 ## RULE 0 — TASK ORCHESTRATION (Default for All Large Tasks)
 
-### When to Use new_task by Default
 Use new_task by default whenever a task touches more than 3 files OR requires more than one logical concern (e.g. model + controller + service + test).
 
-**Breaking tasks into subtasks keeps each context window small and focused = faster inference, fewer mistakes, better code quality.**
-
 ### Orchestration Workflow
-When given a large task:
-1. Plan all required files and changes (use Plan mode)
-2. Break into subtasks — each subtask handles ONE logical unit:
+1. Plan all required files and changes using Plan mode.
+2. Break into subtasks:
    - One subtask per layer: Model, Migration, Service, Controller, Request, Resource, Test
    - Or one subtask per domain feature if small enough
-3. Spawn each subtask using new_task with:
-   - Exact instructions for that subtask only
-   - List of files it should read for context
-   - List of files it should create or modify
-   - Any constraints or conventions to follow
-4. Each subtask completes fully before the next starts
+3. Spawn each subtask with exact instructions for that subtask only.
 
 ### Subtask Instructions Must Include
-- What to build (specific, not vague)
-- Which existing files to read first (for context)
+- What to build (specific)
+- Which files to read first
 - Which files to create or edit
-- Relevant conventions (e.g. "use write_to_file, not replace_in_file")
-- What NOT to do (e.g. "do not run migrations, do not install packages")
-
-### Example Split for "Add Appointment feature"
-```
-new_task: "Create Appointment model and migration"
-new_task: "Create AppointmentService with create/update/cancel methods"
-new_task: "Create StoreAppointmentRequest and UpdateAppointmentRequest"
-new_task: "Create AppointmentController (thin, delegates to service)"
-new_task: "Create AppointmentResource"
-new_task: "Write Pest tests for appointment creation and cancellation"
-```
-
-### Never Do This in One Task
-- Do not create a model, service, controller, request, resource AND tests all in one context
-- Do not read 10+ files in a single subtask
-- Do not let context grow beyond what is needed for the immediate step
+- Relevant conventions
+- What NOT to do
 
 ---
 
 ## RULE 1 — FILE EDITING (Most Critical)
 
-### Always Read Before Editing
-Before editing ANY file: read it fully first. Never assume content from memory.
-
-### Choose the Right Edit Strategy
-
-**Files under 300 lines -> write_to_file (full rewrite, always preferred)**
-Write the complete file. Faster, 100% reliable, zero risk of failed partial replace.
-
-**Files over 300 lines -> replace_in_file only when block is unique**
-- Read the file first in this session
-- Copy EXACT lines including all whitespace and indentation
-- Keep search block 3-10 lines, short but unique in the file
-- If replace_in_file fails: do NOT retry, switch to write_to_file immediately
+Always read before editing. Use write_to_file for files under 300 lines, replace_in_file only when block is unique and search context is exact.
 
 ### Forbidden Edit Patterns
 - Never use replace_in_file without reading the file first in the same session
-- Never retry a failed replace_in_file with the same approach
-- Never chain multiple replace_in_file calls that depend on each other
-- Never replace_in_file reformatted or auto-generated code (whitespace differs)
+- No retrying failed replaces
+- No chained replace_in_file calls
+- No replacing reformatted code
 
 ---
 
 ## RULE 2 — FILE CREATION
 
-Before creating any file:
-1. Check the file does not exist (list_files or read_file)
-2. If it exists: read it, then edit, never overwrite blindly
-3. If not: create it complete and correct in one pass
+1. Check if file exists before creating.
+2. If it exists, read it first before editing.
 
-Never run scaffold commands (artisan make:, ng generate, npx create-, etc.) without checking the target file does not already exist.
+Never run scaffold commands without checking target file existence.
 
 ---
 
 ## RULE 3 — TASK EXECUTION
 
-### Plan First, Then Execute
-For tasks touching more than 2 files:
-1. List every file to create or modify
-2. Describe the change to each
-3. Execute in order, no mid-task deviations
+Plan first:
+1. List all files to create or modify
+2. Describe changes for each file
 
-### Complete Each File Before Moving On
-- Never leave a file in a broken state between steps
-- Fix errors immediately when they occur before continuing
+Execute in order:
+- Complete each file before moving on
+- No mid-task deviations
+- Fix errors immediately
 
-### Minimal Footprint
-- Only touch files required by the task
-- No refactoring unrelated code
-- No extra imports, methods, or files beyond task scope
-
-### No Unnecessary Commands
-- No npm install / composer install / pip install unless a new package is required
-- No server restarts unless config changed
-- No full test suite runs mid-task, only tests related to the change
-- All commands must be non-interactive: use -y, --force, --no-interaction flags
+Minimal footprint:
+- Only touch required files
+- No unnecessary commands
 
 ---
 
 ## RULE 4 — CODE QUALITY (All Languages)
 
-- Single responsibility per function/method, max 40 lines, extract if longer
-- Named constants/enums for all magic strings and numbers
-- Descriptive names: getUserById not getUser, isEmailVerified not check
-- All error cases handled explicitly, never swallow exceptions silently
-- All user input validated before use or storage
-- No credentials, API keys, or secrets in code, environment variables only
-- Remove all debug statements before finishing: dd(), console.log(), var_dump(), print_r()
-- Delete dead code, never comment it out
+- Single responsibility per function/method (max 40 lines).
+- Named constants/enums for magic strings/numbers.
+- Descriptive names only.
+- Handle all errors explicitly.
+- Validate user input before use/storage.
+- Remove debug statements.
 
 ---
 
 ## RULE 5 — PHP / LARAVEL
 
-### Every PHP File Must Start With
+1. Every PHP file starts with:
 ```php
 <?php
-
 declare(strict_types=1);
 ```
 
-### Architecture
-```
-Request -> Controller (thin) -> Service (business logic) -> Model (data)
-                             -> Form Request (validation)
-                             -> Resource (API response)
-```
+2. Architecture:
+Request -> Controller (thin) -> Service -> Model
+         -> Form Request -> Resource
 
-- Controllers: routing and delegation only, no business logic
-- Services: all business logic, DB transactions, orchestration
-- Models: relationships, casts, scopes, no business logic
-- Form Requests: ALL validation, never validate in controllers
-- Resources: ALL API response shaping, never return raw models from API
-
-### PHP 8.3 Features to Always Use
-- declare(strict_types=1) on every file
+Features to use:
+- declare(strict_types=1)
 - Typed properties and constructor property promotion
-- Return type on every method
-- Enums for fixed value sets
 - Match expressions over switch
-- Nullsafe operator: $user?->profile?->name
-- Readonly properties where applicable
-- Model binding in controllers
+- Nullsafe operator
+- Model binding
 
 ---
 
 ## RULE 6 — JAVASCRIPT / TYPESCRIPT
 
-- TypeScript over JavaScript for all new files
-- strict: true in tsconfig, no exceptions
-- No `any` type, use unknown + narrowing or proper interfaces
-- const over let, never var
-- Handle all Promise rejections
-- Named exports over default exports
-- No console.log in committed code
+- Use TypeScript for all new files.
+- strict: true in tsconfig.
+- No `any` type, use unknown + narrowing or proper interfaces.
+- const over let, never var.
+- Handle all Promise rejections.
+- Named exports over default exports.
+- No console.log in committed code.
 
 ---
 
 ## RULE 7 — TESTING
 
-- Write tests for every new feature and bug fix
-- Cover: happy path, validation errors, edge cases, authorization
-- Use factories for model creation, never depend on pre-existing DB state
-- Naming: it('creates a customer with valid data')
+- Write tests for every new feature and bug fix.
+- Use factories for model creation.
+- Name tests descriptively (e.g., "it('creates a customer with valid data')").
 
 ---
 
 ## RULE 8 — SECURITY
 
-- Validate and sanitize all user input before use or storage
-- Parameterized queries only, no string-concatenated SQL
-- Check authentication and authorization before every protected action
-- No sensitive data in logs
-- No wildcards in CORS for production
+- Validate and sanitize all user input.
+- Use parameterized queries only.
+- Check authentication/authorization before protected actions.
+- No sensitive data in logs.
+- No wildcards in CORS for production.
 
 ---
 
 ## RULE 9 — PERFORMANCE (Local Dev Machine)
 
-- Batch related file changes into one response, fewer round trips
-- Write complete files rather than many partial replacements
-- Read only what you need, targeted reads on large files
-- If you read a file this session, do not read it again unless it changed
-- Commands must be non-interactive, no prompts waiting for input
+- Batch file changes into one response.
+- Write complete files rather than partial replacements.
+- Read only what you need.
+- Don't read files multiple times unless changed.
 
 ---
 
 ## RULE 10 — COMMUNICATION
 
-- One-line summary of what you are about to do, before doing it
-- After completing: list files created/modified
-- If a step fails: explain why, state the new approach
-- Do not ask clarifying questions when a clear best practice exists, decide and proceed
-- Do not print code in chat that you are also writing to a file, write it to the file directly
+- Summarize actions before doing them.
+- List files created/modified after completion.
+- Explain failures with new approach.
+- No debug output in committed code.
