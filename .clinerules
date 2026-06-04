@@ -1,3 +1,147 @@
+<<<<<<< HEAD
+# Global Cline Rules — All Projects
+
+These rules apply to every project regardless of technology stack or location.
+Optimized for local AI model (qwen2.5-coder:14b) on RTX 3500 Ada.
+
+---
+
+## RULE 0 — TASK ORCHESTRATION (Default for All Large Tasks)
+
+Use new_task by default whenever a task touches more than 3 files OR requires more than one logical concern (e.g. model + controller + service + test).
+
+### Orchestration Workflow
+1. Plan all required files and changes using Plan mode.
+2. Break into subtasks:
+   - One subtask per layer: Model, Migration, Service, Controller, Request, Resource, Test
+   - Or one subtask per domain feature if small enough
+3. Spawn each subtask with exact instructions for that subtask only.
+
+### Subtask Instructions Must Include
+- What to build (specific)
+- Which files to read first
+- Which files to create or edit
+- Relevant conventions
+- What NOT to do
+
+---
+
+## RULE 1 — FILE EDITING (Most Critical)
+
+Always read before editing. Use write_to_file for files under 300 lines, replace_in_file only when block is unique and search context is exact.
+
+### Forbidden Edit Patterns
+- Never use replace_in_file without reading the file first in the same session
+- No retrying failed replaces
+- No chained replace_in_file calls
+- No replacing reformatted code
+
+---
+
+## RULE 2 — FILE CREATION
+
+1. Check if file exists before creating.
+2. If it exists, read it first before editing.
+
+Never run scaffold commands without checking target file existence.
+
+---
+
+## RULE 3 — TASK EXECUTION
+
+Plan first:
+1. List all files to create or modify
+2. Describe changes for each file
+
+Execute in order:
+- Complete each file before moving on
+- No mid-task deviations
+- Fix errors immediately
+
+Minimal footprint:
+- Only touch required files
+- No unnecessary commands
+
+---
+
+## RULE 4 — CODE QUALITY (All Languages)
+
+- Single responsibility per function/method (max 40 lines).
+- Named constants/enums for magic strings/numbers.
+- Descriptive names only.
+- Handle all errors explicitly.
+- Validate user input before use/storage.
+- Remove debug statements.
+
+---
+
+## RULE 5 — PHP / LARAVEL
+
+1. Every PHP file starts with:
+```php
+<?php
+declare(strict_types=1);
+```
+
+2. Architecture:
+Request -> Controller (thin) -> Service -> Model
+         -> Form Request -> Resource
+
+Features to use:
+- declare(strict_types=1)
+- Typed properties and constructor property promotion
+- Match expressions over switch
+- Nullsafe operator
+- Model binding
+
+---
+
+## RULE 6 — JAVASCRIPT / TYPESCRIPT
+
+- Use TypeScript for all new files.
+- strict: true in tsconfig.
+- No `any` type, use unknown + narrowing or proper interfaces.
+- const over let, never var.
+- Handle all Promise rejections.
+- Named exports over default exports.
+- No console.log in committed code.
+
+---
+
+## RULE 7 — TESTING
+
+- Write tests for every new feature and bug fix.
+- Use factories for model creation.
+- Name tests descriptively (e.g., "it('creates a customer with valid data')").
+
+---
+
+## RULE 8 — SECURITY
+
+- Validate and sanitize all user input.
+- Use parameterized queries only.
+- Check authentication/authorization before protected actions.
+- No sensitive data in logs.
+- No wildcards in CORS for production.
+
+---
+
+## RULE 9 — PERFORMANCE (Local Dev Machine)
+
+- Batch file changes into one response.
+- Write complete files rather than partial replacements.
+- Read only what you need.
+- Don't read files multiple times unless changed.
+
+---
+
+## RULE 10 — COMMUNICATION
+
+- Summarize actions before doing them.
+- List files created/modified after completion.
+- Explain failures with new approach.
+- No debug output in committed code.
+=======
 # Cline Rules — SalonBalance (Laravel 13, PHP 8.3)
 
 ## RULE 0 — TASK ORCHESTRATION (Always Default)
@@ -423,3 +567,4 @@ Stack:
 - Vite 8
 - Pest 4 for testing
 - `laravel/pail` for log tailing
+>>>>>>> main
